@@ -76,12 +76,13 @@ jobs:
         with:
           image: ghcr.io/cdenneen/happy-server@${{ steps.build.outputs.digest }}
           format: spdx-json
+          output-file: sbom.spdx.json
 
       - name: Attest SBOM
         env:
           COSIGN_EXPERIMENTAL: "1"
         run: |
-          cosign attest --yes --type spdxjson --predicate "${{ steps.sbom.outputs.sbom-path }}" \
+          cosign attest --yes --type spdxjson --predicate sbom.spdx.json \
             ghcr.io/cdenneen/happy-server@${{ steps.build.outputs.digest }}
 
       - name: Build local image for schema validation
