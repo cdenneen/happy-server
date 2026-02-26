@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.7
+
 ARG NODE_VERSION=20
 ARG UPSTREAM_REPO=https://github.com/slopus/happy.git
 ARG UPSTREAM_REF=main
@@ -42,7 +44,9 @@ COPY --from=source /src/packages/happy-server/prisma packages/happy-server/prism
 COPY --from=source /src/packages/happy-cli/scripts packages/happy-cli/scripts
 COPY --from=source /src/packages/happy-cli/tools packages/happy-cli/tools
 
-RUN corepack enable \
+RUN --mount=type=cache,target=/root/.cache/yarn \
+  --mount=type=cache,target=/root/.cache/node/corepack \
+  corepack enable \
   && yarn config set network-timeout 600000 -g \
   && SKIP_HAPPY_WIRE_BUILD=1 yarn install --frozen-lockfile --ignore-engines --network-timeout 600000
 
