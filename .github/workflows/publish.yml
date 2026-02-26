@@ -98,3 +98,22 @@ jobs:
             yarn --cwd packages/happy-server prisma migrate deploy
           docker rm -f happy-postgres
           docker network rm happy-ci
+
+      - name: Validate server health (PGlite)
+        run: |
+          set -euo pipefail
+          docker run -d --name happy-server-ci \
+            -p 3000:3000 \
+            -e HANDY_MASTER_SECRET=ci-secret \
+            -e DATA_DIR=/data \
+            -e PGLITE_DIR=/data/pglite \
+            -v "$GITHUB_WORKSPACE/ci-data:/data" \
+            happy-server:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/health > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://localhost:3000/health
+          docker rm -f happy-server-ci
