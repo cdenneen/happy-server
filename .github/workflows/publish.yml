@@ -113,11 +113,15 @@ jobs:
             -e PGLITE_DIR=/data/pglite \
             -v "$GITHUB_WORKSPACE/ci-data:/data" \
             happy-server:ci
-          for i in $(seq 1 30); do
-            if curl -fsS http://localhost:3000/health > /dev/null; then
+          for i in $(seq 1 60); do
+            if curl -fsS --max-time 5 http://localhost:3000/health > /dev/null; then
               break
             fi
-            sleep 1
+            if [ "$i" -eq 60 ]; then
+              docker logs happy-server-ci || true
+              exit 1
+            fi
+            sleep 2
           done
-          curl -fsS http://localhost:3000/health
+          curl -fsS --retry 5 --retry-connrefused --retry-delay 2 --max-time 5 http://localhost:3000/health
           docker rm -f happy-server-ci
