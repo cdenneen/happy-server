@@ -20,10 +20,10 @@ For setup and configuration details, see the Happy Engineering guide:
 
 ## Upstream source
 
-Builds use upstream `slopus/happy-server` and pin to the resolved SHA at build time.
-Source repo:
+Builds use upstream `slopus/happy` and pin to the resolved SHA at build time.
+Source repo and package path:
 
-- https://github.com/slopus/happy-server
+- https://github.com/slopus/happy/tree/main/packages/happy-server
 
 ## Local build
 

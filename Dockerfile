@@ -1,6 +1,7 @@
 ARG NODE_VERSION=22
-ARG UPSTREAM_REPO=https://github.com/slopus/happy-server.git
+ARG UPSTREAM_REPO=https://github.com/slopus/happy.git
 ARG UPSTREAM_REF=main
+ARG UPSTREAM_PATH=packages/happy-server
 
 FROM node:${NODE_VERSION}-bookworm-slim AS source
 
@@ -12,6 +13,7 @@ WORKDIR /src
 
 ARG UPSTREAM_REPO
 ARG UPSTREAM_REF
+ARG UPSTREAM_PATH
 
 RUN git clone "$UPSTREAM_REPO" . \
   && git checkout "$UPSTREAM_REF" \
@@ -25,14 +27,14 @@ RUN apt-get update \
 
 WORKDIR /app
 
-COPY --from=source /src/package.json /src/yarn.lock ./
-COPY --from=source /src/prisma ./prisma
+COPY --from=source /src/${UPSTREAM_PATH}/package.json /src/${UPSTREAM_PATH}/yarn.lock ./
+COPY --from=source /src/${UPSTREAM_PATH}/prisma ./prisma
 
 RUN corepack enable \
   && yarn install --frozen-lockfile --ignore-engines
 
-COPY --from=source /src/tsconfig.json /src/vitest.config.ts ./
-COPY --from=source /src/sources ./sources
+COPY --from=source /src/${UPSTREAM_PATH}/tsconfig.json /src/${UPSTREAM_PATH}/vitest.config.ts ./
+COPY --from=source /src/${UPSTREAM_PATH}/sources ./sources
 
 RUN yarn build
 
