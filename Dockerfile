@@ -43,7 +43,8 @@ COPY --from=source /src/packages/happy-cli/scripts packages/happy-cli/scripts
 COPY --from=source /src/packages/happy-cli/tools packages/happy-cli/tools
 
 RUN corepack enable \
-  && SKIP_HAPPY_WIRE_BUILD=1 yarn install --frozen-lockfile --ignore-engines
+  && yarn config set network-timeout 600000 -g \
+  && SKIP_HAPPY_WIRE_BUILD=1 yarn install --frozen-lockfile --ignore-engines --network-timeout 600000
 
 COPY --from=source /src/packages/happy-wire ./packages/happy-wire
 COPY --from=source /src/packages/happy-server ./packages/happy-server

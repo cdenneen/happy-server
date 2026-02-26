@@ -50,6 +50,8 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: |
             ghcr.io/cdenneen/happy-server:${{ steps.tags.outputs.tag }}
             ghcr.io/cdenneen/happy-server:latest
@@ -62,6 +64,8 @@ jobs:
           docker buildx build \
             --load \
             --platform linux/amd64 \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
             --build-arg UPSTREAM_REF=${{ steps.upstream.outputs.upstream_sha }} \
             --build-arg UPSTREAM_REPO=https://github.com/slopus/happy.git \
             -t happy-server:ci \
