@@ -56,3 +56,45 @@ jobs:
           build-args: |
             UPSTREAM_REF=${{ steps.upstream.outputs.upstream_sha }}
             UPSTREAM_REPO=https://github.com/slopus/happy.git
+
+      - name: Build local image for schema validation
+        run: |
+          docker buildx build \
+            --load \
+            --platform linux/amd64 \
+            --build-arg UPSTREAM_REF=${{ steps.upstream.outputs.upstream_sha }} \
+            --build-arg UPSTREAM_REPO=https://github.com/slopus/happy.git \
+            -t happy-server:ci \
+            .
+
+      - name: Validate PGlite schema
+        run: |
+          docker run --rm \
+            -e HANDY_MASTER_SECRET=ci-secret \
+            -e DATA_DIR=/data \
+            -e PGLITE_DIR=/data/pglite \
+            -v "$GITHUB_WORKSPACE/ci-data:/data" \
+            happy-server:ci \
+            yarn --cwd packages/happy-server standalone migrate
+
+      - name: Validate Postgres schema
+        run: |
+          set -euo pipefail
+          docker network create happy-ci
+          docker run -d --name happy-postgres --network happy-ci \
+            -e POSTGRES_PASSWORD=postgres \
+            -e POSTGRES_DB=happy-server \
+            postgres:16
+          for i in $(seq 1 30); do
+            if docker exec happy-postgres pg_isready -U postgres; then
+              break
+            fi
+            sleep 1
+          done
+          docker run --rm --network happy-ci \
+            -e HANDY_MASTER_SECRET=ci-secret \
+            -e DATABASE_URL=postgresql://postgres:postgres@happy-postgres:5432/happy-server \
+            happy-server:ci \
+            yarn --cwd packages/happy-server prisma migrate deploy
+          docker rm -f happy-postgres
+          docker network rm happy-ci
