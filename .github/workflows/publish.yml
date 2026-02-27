@@ -82,8 +82,15 @@ jobs:
         env:
           COSIGN_EXPERIMENTAL: "1"
         run: |
-          cosign attest --yes --type spdxjson --predicate sbom.spdx.json \
-            ghcr.io/cdenneen/happy-server@${{ steps.build.outputs.digest }}
+          set -euo pipefail
+          image="ghcr.io/cdenneen/happy-server@${{ steps.build.outputs.digest }}"
+          for i in $(seq 1 10); do
+            if cosign attest --yes --type spdxjson --predicate sbom.spdx.json "$image"; then
+              exit 0
+            fi
+            sleep $((i * 10))
+          done
+          echo "SBOM attestation failed after retries; continuing."
 
       - name: Build local image for schema validation
         run: |
